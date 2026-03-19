@@ -26,4 +26,5 @@ export const endpoints = {
   getAnchor: '/anchor/today',
   categoryStats: '/stats/categories',
   streaks: '/streaks',
+  clearData: '/clear-data',
 };

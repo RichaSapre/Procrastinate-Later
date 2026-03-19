@@ -104,7 +104,7 @@ const Dashboard = ({ anchor, nightOwl, setNightOwl, onGoToReport, onGoToStreaks 
 
           {/* QUICK ADD FORM */}
           <section className="card" style={{ backgroundColor: 'var(--paper)', border: '2px solid var(--ink)' }}>
-            <p className="mono label" style={{ marginBottom: '1rem', opacity: 0.7 }}>Add to your list</p>
+            <p className="mono label" style={{ marginBottom: '1rem', opacity: 0.7 }}>Add to Your List</p>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <input 
                 id="quick-task-input"

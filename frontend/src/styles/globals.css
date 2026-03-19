@@ -60,7 +60,6 @@ button {
   padding: 0.75rem 1.5rem;
   background-color: var(--ink);
   color: var(--cream);
-  text-transform: lowercase;
 }
 
 button:hover {
@@ -158,7 +157,6 @@ body.night-owl .dim-irrelevant {
 }
 
 .label {
-  text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.75rem;
   font-weight: 500;
@@ -173,7 +171,7 @@ body.night-owl .dim-irrelevant {
   gap: 1.5rem;
   font-family: 'DM Mono', monospace;
   font-size: 0.75rem;
-  text-transform: uppercase;
+  font-size: 0.75rem;
   letter-spacing: 0.05em;
 }
 
@@ -233,7 +231,6 @@ body.night-owl .dim-irrelevant {
 
 .category-card .card-title {
   font-size: 1.25rem;
-  text-transform: lowercase;
   margin-bottom: 0.5rem;
 }
 
@@ -285,7 +282,7 @@ body.night-owl .dim-irrelevant {
   color: var(--paper);
   width: 100%;
   max-width: 400px;
-  text-transform: lowercase;
+  max-width: 400px;
   box-shadow: 4px 4px 0px var(--ink);
 }
 

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { fetchWithConfig, endpoints } from '../utils/api';
 
 const reasons = [
-  { id: 'too_long', label: 'It feels like it will take forever' },
-  { id: 'dont_know_where', label: 'I do not know where to begin' },
-  { id: 'distracted', label: 'I got distracted' },
-  { id: 'doing_easier', label: 'I am doing something easier' }
+  { id: 'too_long', label: 'It Feels Like It Will Take Forever' },
+  { id: 'dont_know_where', label: 'I Do Not Know Where to Begin' },
+  { id: 'distracted', label: 'I Got Distracted' },
+  { id: 'doing_easier', label: 'I Am Doing Something Easier' }
 ];
 
 const ProcrastinationCheck = ({ task_id, onClose, onStart }) => {
@@ -40,7 +40,7 @@ const ProcrastinationCheck = ({ task_id, onClose, onStart }) => {
       }}
     >
       <h2 style={{ fontSize: '3rem', marginBottom: '3rem', color: 'var(--cream)' }}>
-        Why have you not started yet?
+        Why Have You Not Started Yet?
       </h2>
 
       {!microAction && !loading && (
@@ -83,7 +83,7 @@ const ProcrastinationCheck = ({ task_id, onClose, onStart }) => {
               fontSize: '1.2rem' 
             }}
           >
-            Got it. Starting now.
+            Got It. Starting Now.
           </button>
         </div>
       )}

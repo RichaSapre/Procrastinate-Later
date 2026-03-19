@@ -175,32 +175,44 @@ async def get_weekly_report():
     tasks = tasks_res.data
     logs = logs_res.data
     
-    completed_dsa = sum(1 for t in tasks if t['category'] == 'DSA' and t['status'] == 'completed')
-    completed_apps = sum(1 for t in tasks if t['category'] == 'Applications' and t['status'] == 'completed')
-    
     # Calculate most common reason
     reasons = {}
     for log in logs:
         r = log.get('reason', 'unknown')
         reasons[r] = reasons.get(r, 0) + 1
     most_common_reason = max(reasons, key=reasons.get) if reasons else "None"
+
+    # Calculate summary based on all tasks
+    completed_tasks = [t for t in tasks if t['status'] == 'completed']
+    cat_counts = {}
+    for t in completed_tasks:
+        c = str(t.get('category', 'Other'))
+        cat_counts[c] = cat_counts.get(c, 0) + 1
     
-    # Simple summary generation
-    summary = f"This week you completed {completed_dsa} DSA sessions but submitted {completed_apps} job applications. "
-    if completed_apps == 0:
-        summary += "At this rate you will have applied to zero companies by the end of the month."
+    if not cat_counts:
+        summary = "No tasks completed this week yet. The best time to start was yesterday, the second best time is now."
     else:
-        summary += f"You're making progress. Keep it up."
+        top_cat = max(cat_counts, key=cat_counts.get)
+        summary = f"This week you've been most active in {top_cat} with {cat_counts[top_cat]} tasks completed. "
+        if len(cat_counts) > 1:
+            summary += f"You're also making progress in {len(cat_counts)-1} other areas. Keep the momentum going!"
+        else:
+            summary += "Focus is good, but don't forget your other tracked areas if they need attention."
         
+    metrics = [
+        {"label": "Total Tasks Completed", "value": len(completed_tasks)},
+        {"label": "Procrastination Logs", "value": len(logs)},
+        {"label": "Most Common Reason", "value": most_common_reason.replace("_", " ")}
+    ]
+    # Add top 3 categories to metrics
+    sorted_cats = sorted(cat_counts.items(), key=lambda x: x[1], reverse=True)
+    for cat, count in sorted_cats[:3]:
+        metrics.append({"label": f"{cat} Completed", "value": count})
+
     return {
         "week_title": f"Week of {start_of_week.strftime('%b %d')}",
         "summary": summary,
-        "metrics": [
-            {"label": "DSA Sessions Completed", "value": completed_dsa},
-            {"label": "Job Apps Submitted", "value": completed_apps},
-            {"label": "Procrastination Logs", "value": len(logs)},
-            {"label": "Most Common Reason", "value": most_common_reason.replace("_", " ")}
-        ]
+        "metrics": metrics
     }
 
 @app.get("/streaks")
@@ -211,8 +223,9 @@ async def get_streaks():
     tasks_res = supabase.table("tasks").select("date", "category", "status").gte("date", start_point).execute()
     logs_res = supabase.table("procrastination_logs").select("timestamp", "task_id").gte("timestamp", start_point).execute()
     
-    # Group by category
-    categories = ["DSA", "Applications", "Fitness", "LinkedIn", "College", "Other"]
+    # Get all unique categories present in tasks
+    unique_cats_res = supabase.table("tasks").select("category").execute()
+    categories = sorted(list(set([t['category'] for t in unique_cats_res.data] + ["Other"])))
     result = []
     
     for cat in categories:
@@ -257,7 +270,9 @@ async def get_anchor_today():
 @app.get("/stats/categories")
 async def get_category_stats():
     if not supabase: return []
-    categories = ["DSA", "Applications", "Fitness", "LinkedIn", "College", "Other"]
+    # Get all unique categories present in tasks
+    unique_cats_res = supabase.table("tasks").select("category").execute()
+    categories = sorted(list(set([t['category'] for t in unique_cats_res.data])))
     stats = []
     
     for cat in categories:
@@ -274,11 +289,18 @@ async def get_category_stats():
         
         stats.append({
             "id": cat,
-            "name": cat.lower(),
+            "name": cat,
             "lastDone": last_done
         })
     
     return stats
+
+@app.post("/clear-data")
+async def clear_all_data():
+    if not supabase: raise HTTPException(status_code=500, detail="Supabase not configured")
+    supabase.table("tasks").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+    supabase.table("procrastination_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+    return {"message": "Data cleared successfully"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -80,7 +80,7 @@ function App() {
           className="hero-heading"
           style={{ 
             fontSize: '1.2rem', 
-            textTransform: 'lowercase', 
+            textTransform: 'none', 
             cursor: 'pointer',
             opacity: 0.8,
             marginBottom: 0
@@ -92,19 +92,30 @@ function App() {
         <nav className="nav-links">
           <span 
             className={`nav-link ${activeScreen === 'dashboard' ? 'active' : ''}`} 
-            onClick={() => anchor && setActiveScreen('dashboard')}
-            style={{ cursor: anchor ? 'pointer' : 'not-allowed' }}
+            onClick={() => setActiveScreen('dashboard')}
           >
             Dashboard
           </span>
-          <span 
-            className={`nav-link ${activeScreen === 'daily-setup' ? 'active' : ''}`} 
-            onClick={() => setActiveScreen('daily-setup')}
-          >
-            Daily Setup
-          </span>
+          <span className={`nav-link ${activeScreen === 'daily-setup' ? 'active' : ''}`} onClick={() => setActiveScreen('daily-setup')}>Daily Setup</span>
           <span className={`nav-link ${activeScreen === 'streaks' ? 'active' : ''}`} onClick={() => setActiveScreen('streaks')}>Streaks</span>
           <span className={`nav-link ${activeScreen === 'report' ? 'active' : ''}`} onClick={() => setActiveScreen('report')}>Report</span>
+          <span 
+            className="nav-link" 
+            style={{ color: 'var(--terracotta)', fontWeight: 'bold' }}
+            onClick={async () => {
+              if (window.confirm("This will clear everything and start fresh. Proceed?")) {
+                try {
+                  await fetchWithConfig(endpoints.clearData, { method: 'POST' });
+                  localStorage.removeItem('custom_categories');
+                  window.location.reload();
+                } catch (err) {
+                  alert("Failed to reset. Check if server is running.");
+                }
+              }
+            }}
+          >
+            Clean Start
+          </span>
         </nav>
       </header>
       
@@ -112,8 +123,31 @@ function App() {
         {renderScreen()}
       </main>
 
-      <footer className="mono" style={{ marginTop: '4rem', fontSize: '0.7rem', opacity: 0.6, borderTop: '1px solid var(--ink)', paddingTop: '1rem' }}>
+      <footer className="mono" style={{ marginTop: '4rem', fontSize: '0.7rem', opacity: 0.6, borderTop: '1px solid var(--ink)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p>Procrastinate Later · Built by Richa Nitin Sapre</p>
+        <button 
+          onClick={async () => {
+            if (window.confirm("Are you sure you want to clear all data? This will reset your areas and tasks.")) {
+              try {
+                await fetchWithConfig(endpoints.clearData, { method: 'POST' });
+                localStorage.removeItem('custom_categories');
+                window.location.reload();
+              } catch (err) {
+                alert("Failed to reset data.");
+              }
+            }
+          }}
+          style={{ 
+            backgroundColor: 'transparent', 
+            color: 'var(--terracotta)', 
+            border: 'none', 
+            padding: 0, 
+            fontSize: '0.7rem',
+            textDecoration: 'underline'
+          }}
+        >
+          Reset All Data
+        </button>
       </footer>
     </div>
   );

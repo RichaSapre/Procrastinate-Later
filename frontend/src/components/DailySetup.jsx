@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithConfig, endpoints } from '../utils/api';
 
-const DEFAULT_CATEGORIES = [
-  { id: 'DSA', name: 'dsa', lastDone: 'Never' },
-  { id: 'Applications', name: 'applications', lastDone: 'Never' },
-  { id: 'Fitness', name: 'fitness', lastDone: 'Never' },
-  { id: 'LinkedIn', name: 'linkedin', lastDone: 'Never' },
-  { id: 'College', name: 'college', lastDone: 'Never' },
-  { id: 'Other', name: 'other', lastDone: 'Never' }
-];
+const DEFAULT_CATEGORIES = [];
+
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
 function DailySetup({ onAnchorSet }) {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [newCategory, setNewCategory] = useState('');
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,16 +18,55 @@ function DailySetup({ onAnchorSet }) {
     const fetchCats = async () => {
       try {
         const stats = await fetchWithConfig(endpoints.categoryStats);
+        
+        // Load custom categories from localStorage
+        const customCats = JSON.parse(localStorage.getItem('custom_categories') || '[]');
+        
+        let merged = [...DEFAULT_CATEGORIES];
+        
+        // Add categories from backend if they have data
         if (stats && stats.length > 0) {
-          setCategories(stats);
+          stats.forEach(s => {
+            if (!merged.find(m => m.id === s.id)) {
+              merged.push(s);
+            } else {
+              // Update lastDone if we have it from stats
+              const idx = merged.findIndex(m => m.id === s.id);
+              merged[idx] = { ...merged[idx], lastDone: s.lastDone };
+            }
+          });
         }
+        
+        // Add custom ones that aren't already there
+        customCats.forEach(c => {
+          if (!merged.find(m => m.id === c)) {
+            merged.push({ id: c, name: c, lastDone: 'Never' });
+          }
+        });
+
+        setCategories(merged);
       } catch (err) {
         console.error("Failed to load categories", err);
-        // Error on background fetch shouldn't break the component since we have defaults
       }
     };
     fetchCats();
   }, []);
+
+  const handleAddCategory = () => {
+    if (!newCategory.trim()) return;
+    const catName = newCategory.trim();
+    if (!categories.find(c => c.id.toLowerCase() === catName.toLowerCase())) {
+        const newCat = { id: catName, name: catName, lastDone: 'Never' };
+        const updated = [...categories, newCat];
+        setCategories(updated);
+        
+        // Save to localStorage
+        const custom = JSON.parse(localStorage.getItem('custom_categories') || '[]');
+        localStorage.setItem('custom_categories', JSON.stringify([...custom, catName]));
+    }
+    setNewCategory('');
+    setIsAddingCategory(false);
+  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !selectedCategory) return;
@@ -70,14 +106,14 @@ function DailySetup({ onAnchorSet }) {
   return (
     <div className="setup-page fade-enter fade-enter-active">
       <header style={{ marginBottom: '3rem' }}>
-        <h1 className="hero-heading">What is the one thing that matters today?</h1>
+        <h1 className="hero-heading">What Is the One Thing That Matters Today?</h1>
         <p className="instruction text-secondary">
-          Pick one area, then name one concrete task you’ll complete today.
+          Pick one area, then name one concrete task you'll complete today.
         </p>
       </header>
 
       <section>
-        <span className="label">Areas you're tracking</span>
+        <span className="label">Areas You're Tracking</span>
         <div className="category-grid">
           {categories.map((cat) => (
             <div 
@@ -86,7 +122,7 @@ function DailySetup({ onAnchorSet }) {
               onClick={() => setSelectedCategory(cat.id)}
             >
               <div>
-                <h3 className="card-title">{cat.name}</h3>
+                <h3 className="card-title">{capitalize(cat.name)}</h3>
                 <p className="card-meta">Last done: {cat.lastDone}</p>
               </div>
               {selectedCategory === cat.id && (
@@ -94,13 +130,43 @@ function DailySetup({ onAnchorSet }) {
               )}
             </div>
           ))}
+          
+          {isAddingCategory ? (
+            <div className="category-card" style={{ borderStyle: 'dashed', borderColor: 'var(--ink)' }}>
+              <input 
+                type="text"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="Area name..."
+                className="anchor-input"
+                style={{ fontSize: '1rem', padding: '0.2rem 0', marginBottom: '0.5rem' }}
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+              />
+              <button 
+                className="btn-primary" 
+                style={{ padding: '0.4rem', fontSize: '0.7rem' }}
+                onClick={handleAddCategory}
+              >
+                Add Area
+              </button>
+            </div>
+          ) : (
+            <div 
+              className="category-card" 
+              style={{ borderStyle: 'dashed', borderColor: 'var(--ink)', display: 'flex', justifyContent: 'center', alignItems: 'center', opacity: 0.6, cursor: 'pointer' }}
+              onClick={() => setIsAddingCategory(true)}
+            >
+              <h3 className="card-title">+ New Area</h3>
+            </div>
+          )}
         </div>
       </section>
 
       {selectedCategory && (
         <section className="anchor-input-group fade-enter fade-enter-active">
           <span className="label">
-            You chose: <span style={{ color: 'var(--terracotta)' }}>{selectedCategory.toLowerCase()}</span>. Now name today's task.
+            You Chose: <span style={{ color: 'var(--terracotta)' }}>{capitalize(selectedCategory)}</span>. Now name today's task.
           </span>
           <input 
             type="text" 
@@ -122,7 +188,7 @@ function DailySetup({ onAnchorSet }) {
             onClick={handleSubmit} 
             disabled={loading || !title.trim()}
           >
-            {loading ? 'Securing your one thing...' : 'Save today’s one thing'}
+            {loading ? 'Securing Your One Thing...' : "Save Today's One Thing"}
           </button>
         </section>
       )}
